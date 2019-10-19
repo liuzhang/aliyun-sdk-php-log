@@ -2,10 +2,14 @@
   "name": "liuzhang/aliyun-sdk-php-log",
   "description": "this is ailyun log sdk repo for composer.",
   "license": "MIT",
-  
+
   "autoload": {
     "psr-4": {
       "AliyunLog\\": "./src"
     }
+  },
+
+  "require": {
+    "monolog/monolog": "^1.12"
   }
 }

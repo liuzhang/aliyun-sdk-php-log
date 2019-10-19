@@ -9,55 +9,38 @@
 
 namespace AliyunLog;
 
+use Monolog\Logger;
 use Monolog\Handler\AbstractSyslogHandler;
 
 
 class LogHandler extends AbstractSyslogHandler
 {
     protected $client;
-    protected $ident;
 
-    /**
-     * @param string $host
-     * @param int    $port
-     * @param mixed  $facility
-     * @param int    $level    The minimum logging level at which this handler will be triggered
-     * @param bool   $bubble   Whether the messages that are handled can bubble up the stack or not
-     * @param string $ident    Program name or tag for each log message.
-     */
-    public function __construct($facility = LOG_USER, $level = Logger::DEBUG, $bubble = true, $ident = 'php')
+    protected $ident = 'php';
+
+    protected $project;
+
+    protected $logstore;
+
+
+    public function __construct($endpoint, $accessKeyId, $accessKey, $project, $logstore)
     {
-        parent::__construct($facility, $level, $bubble);
-
-        $this->ident = $ident;
-
-        $endpoint = 'http://cn-shenzhen.log.aliyuncs.com';
-        $accessKeyId = 'LTAI4Fg2owzdbVDUPvw1xqda';
-        $accessKey = 'OSnglJmXiiUeMfDpy4kjzqL9LGdpDM';
-        $token = "";
-
-        $this->client = new Client($endpoint, $accessKeyId, $accessKey,$token);
+        parent::__construct($facility = LOG_USER, $level = Logger::DEBUG, $bubble = true);
+        $this->project  = $project;
+        $this->logstore  = $logstore;
+        $this->client = new Client($endpoint, $accessKeyId, $accessKey);
     }
 
     protected function write(array $record)
     {
         $lines = $this->splitMessageIntoLines($record['formatted']);
-
-        $header = $this->makeCommonSyslogHeader($this->logLevels[$record['level']]);
-
-
-        $topic = 'TestTopic';
-
-        $project = 'asr-php-user-server';
-        $logstore = 'user-info';
-
-        $contents = [];
+        $topic = 'project-log';
         $logItem = new LogItem();
         $logItem->setTime(time());
         $logItem->setContents($lines);
         $logitems = array($logItem);
-        $request = new PutLogsRequest($project, $logstore,
-            $topic, null, $logitems);
+        $request = new PutLogsRequest($this->project, $this->logstore, $topic, null, $logitems);
 
         $response = $this->client->putLogs($request);
     }
@@ -102,5 +85,4 @@ class LogHandler extends AbstractSyslogHandler
     {
         return date(\DateTime::RFC3339);
     }
-
 }
